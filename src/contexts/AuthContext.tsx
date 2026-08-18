@@ -8,10 +8,17 @@ interface AuthContextValue {
   profile: Profile | null
   loading: boolean
   signInWithGoogle: () => Promise<void>
+  signInWithEmail: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+// Email/password sign-in only makes sense against a local Supabase instance
+// (`supabase start`) seeded with a test user - production is Google-only.
+export const isLocalSupabase = /^https?:\/\/(127\.0\.0\.1|localhost)([:/]|$)/.test(
+  import.meta.env.VITE_SUPABASE_URL ?? '',
+)
 
 const getFirstString = (...values: unknown[]) => values.find((value) => typeof value === 'string' && value.trim().length > 0) as string | undefined
 
@@ -84,6 +91,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
+  const signInWithEmail = async (email: string, password: string) => {
+    if (!isLocalSupabase) throw new Error('Email sign-in is only available against a local Supabase instance.')
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setProfile(null)
@@ -91,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, signInWithGoogle, signInWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   )

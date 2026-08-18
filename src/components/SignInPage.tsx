@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Loader2, AlertCircle } from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth, isLocalSupabase } from '../contexts/AuthContext'
 import Navigation from './Navigation'
 import Footer from './ui/Footer'
 
 export default function SignInPage() {
-  const { signInWithGoogle } = useAuth()
+  const { signInWithGoogle, signInWithEmail } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
@@ -18,6 +20,19 @@ export default function SignInPage() {
       await signInWithGoogle()
     } catch {
       setError('Something went wrong. Please try again.')
+      setIsLoading(false)
+    }
+  }
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+    try {
+      await signInWithEmail(email, password)
+    } catch {
+      setError('Invalid email or password.')
+    } finally {
       setIsLoading(false)
     }
   }
@@ -78,6 +93,38 @@ export default function SignInPage() {
                 )}
                 <span>{isLoading ? 'Signing in...' : 'Continue with Google'}</span>
               </button>
+
+              {/* Local dev test login - only rendered against a local Supabase instance */}
+              {isLocalSupabase && (
+                <div className="mt-6 pt-6 border-t border-slate-200 dark:border-zinc-800">
+                  <p className="text-xs text-slate-400 dark:text-zinc-500 tracking-tight mb-3">
+                    Local dev only - sign in with the seeded test account.
+                  </p>
+                  <form onSubmit={handleEmailSignIn} className="space-y-3">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="test@abhyas.dev"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent text-sm tracking-tight focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+                    />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="TestPassword123!"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-transparent text-sm tracking-tight focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full px-6 py-2.5 rounded-xl bg-slate-100 dark:bg-zinc-900 text-sm font-medium tracking-tight hover:bg-slate-200 dark:hover:bg-zinc-800 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? 'Signing in...' : 'Sign in with test account'}
+                    </button>
+                  </form>
+                </div>
+              )}
 
               {/* Fine print */}
               <p className="text-center text-xs text-slate-400 dark:text-zinc-600 tracking-tight mt-6 leading-relaxed">
