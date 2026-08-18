@@ -8,6 +8,7 @@ import {
 import { useAuth, AuthProvider } from "./contexts/AuthContext";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 import PWAPrompt from "./components/PWAPrompt";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const LandingPage = lazy(() => import("./components/LandingPage"));
 const Dashboard = lazy(() => import("./components/Dashboard"));
@@ -99,11 +100,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
