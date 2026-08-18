@@ -37,6 +37,8 @@
 - **AI Mock Interviews** - Practice with an AI that asks real questions, evaluates your answers, and gives honest feedback.
 - **Resume Optimizer** - Paste your resume and a job description. Get rewritten copy, stronger keywords, and ATS-ready formatting.
 
+All AI calls go through a Supabase Edge Function backed by [Groq](https://groq.com), with per-user rate limiting enforced server-side (20 requests / 5 minutes) and structured JSON responses via Groq's `response_format` mode.
+
 ---
 
 ## Tech Stack
@@ -73,6 +75,15 @@ Set backend secrets for Supabase Edge Functions:
 ```bash
 supabase secrets set GROQ_API_KEY=your_groq_api_key
 supabase secrets set ELEVENLABS_API_KEY=your_elevenlabs_api_key
+```
+
+`GROQ_MODEL` is optional and defaults to `openai/gpt-oss-120b` - set it only if you want to pin a different [Groq-hosted model](https://console.groq.com/docs/models).
+
+Link your project and apply the database migrations (RLS policies + the AI rate-limit table/function):
+
+```bash
+supabase link --project-ref your_project_ref
+supabase db push
 ```
 
 Deploy the Edge Functions:
@@ -112,7 +123,8 @@ Abhyas/
 │   │   ├── PrivacyPage.tsx        # Privacy Policy
 │   │   ├── theme-provider.tsx     # Dark/light mode context
 │   │   ├── theme-toggle.tsx       # Theme toggle button
-│   │   └── lenis-provider.tsx     # Smooth scroll provider
+│   │   ├── lenis-provider.tsx     # Smooth scroll provider
+│   │   └── ErrorBoundary.tsx      # Catches render errors, shows fallback UI
 │   ├── contexts/
 │   │   └── AuthContext.tsx        # Supabase Authentication State
 │   ├── hooks/
@@ -128,7 +140,10 @@ Abhyas/
 │   ├── App.tsx                    # Routes & layout shell
 │   ├── main.tsx                   # Entry point + providers
 │   └── index.css                  # Global styles & design tokens
-├── public/                        # Static assets
+├── public/                        # Static assets, robots.txt, sitemap.xml
+├── supabase/
+│   ├── functions/                 # Edge functions (ai, save-activity, text-to-speech)
+│   └── migrations/                # RLS policies, AI rate-limit table/function
 ├── .env.example                   # Environment variable template
 ├── index.html                     # Vite HTML entry
 ├── vite.config.ts

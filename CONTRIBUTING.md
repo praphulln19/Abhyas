@@ -35,10 +35,14 @@ Before contributing, please ensure you have the following installed:
    ```bash
    supabase secrets set GROQ_API_KEY=your_groq_api_key
    supabase secrets set ELEVENLABS_API_KEY=your_elevenlabs_api_key
+   supabase link --project-ref your_project_ref
+   supabase db push
    supabase functions deploy ai
    supabase functions deploy save-activity
    supabase functions deploy text-to-speech
    ```
+
+   `supabase db push` applies the migrations in `supabase/migrations/` - this includes RLS policies and the table/function backing the AI edge function's rate limiting, so the `ai` function will error without it.
 
 4. **Start the Development Server**
    ```bash
@@ -58,7 +62,7 @@ Before contributing, please ensure you have the following installed:
 
 2. **Make your changes**. Please adhere to the project's coding style (TypeScript strict, Tailwind CSS for styling).
 
-3. **Test your changes**. Ensure that the app builds correctly (`npm run build`) and no existing functionality is broken.
+3. **Test your changes**. Ensure that the app builds correctly (`npm run build`), the test suite passes (`npm run test`), and no existing functionality is broken.
 
 4. **Commit your changes**. Use clear and descriptive commit messages:
    ```bash
