@@ -4,8 +4,11 @@ import { invokeFunction } from "./edgeFunctions";
 // We keep the name "getAIModel" to avoid tying the codebase to Gemini.
 export const getAIModel = () => {
   return {
-    generateContent: async (prompt: string) => {
-      const result = await invokeFunction<{ text: string }>("ai", { prompt });
+    generateContent: async (prompt: string, options?: { jsonMode?: boolean }) => {
+      const result = await invokeFunction<{ text: string }>("ai", {
+        prompt,
+        jsonMode: options?.jsonMode ?? false,
+      });
 
       return {
         response: {
@@ -193,7 +196,7 @@ JSON format:
   try {
     const result = await retryWithBackoff(
       async () => {
-        const response = await model.generateContent(prompt);
+        const response = await model.generateContent(prompt, { jsonMode: true });
         return response.response.text();
       },
       2,
@@ -595,7 +598,7 @@ Return ONLY valid JSON in this exact format:
   try {
     const apiResponse = await retryWithBackoff(
       async () => {
-        const response = await model.generateContent(prompt);
+        const response = await model.generateContent(prompt, { jsonMode: true });
         return response.response.text();
       },
       2,
@@ -708,7 +711,7 @@ If the answer is genuinely too vague or lacks any real substance, return:
   try {
     const text = await retryWithBackoff(
       async () => {
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(prompt, { jsonMode: true });
         return result.response.text();
       },
       3,
@@ -910,7 +913,7 @@ Return ONLY valid JSON in this exact format:
 
   const text = await retryWithBackoff(
     async () => {
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent(prompt, { jsonMode: true });
       return result.response.text();
     },
     3,
@@ -936,7 +939,7 @@ export async function getCareerPathRecommendations(
   const prompt = `Career paths for ${currentRole} with skills: ${skills.join(", ")}\nTimeframe: ${timeframe}\n\nJSON: {"paths":[{"title":"","match":0,"description":"","requiredSkills":[],"timeline":"","salaryRange":"","steps":[]}],"skillGaps":{"critical":[],"important":[]},"marketTrends":[]}`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(prompt, { jsonMode: true });
     const response = await result.response;
     const text = response.text();
 

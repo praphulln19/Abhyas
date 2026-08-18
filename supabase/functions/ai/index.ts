@@ -1,20 +1,39 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { requireUser } from "../_shared/auth.ts";
 
+const RATE_LIMIT_WINDOW_SECONDS = 300;
+const RATE_LIMIT_MAX_REQUESTS = 20;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   try {
-    await requireUser(req);
+    const { client } = await requireUser(req);
 
-    const { prompt } = await req.json();
+    const { prompt, jsonMode } = await req.json();
     if (typeof prompt !== "string" || prompt.trim().length === 0) {
       return jsonResponse({ error: "Prompt is required" }, 400);
     }
 
     if (prompt.length > 60000) {
       return jsonResponse({ error: "Prompt is too large" }, 413);
+    }
+
+    const { data: rateLimit, error: rateLimitError } = await client
+      .rpc("check_ai_rate_limit", {
+        p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+        p_max_requests: RATE_LIMIT_MAX_REQUESTS,
+      })
+      .single();
+
+    if (rateLimitError) throw rateLimitError;
+
+    if (!rateLimit?.allowed) {
+      return jsonResponse(
+        { error: `Rate limit exceeded. Try again in ${rateLimit?.retry_after_seconds ?? RATE_LIMIT_WINDOW_SECONDS}s.` },
+        429,
+      );
     }
 
     const apiKey = Deno.env.get("GROQ_API_KEY");
@@ -32,6 +51,7 @@ Deno.serve(async (req) => {
         temperature: 0.7,
         max_completion_tokens: 4096,
         top_p: 0.9,
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
       }),
     });
 
