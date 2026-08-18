@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         messages: [{ role: "user", content: prompt }],
-        model: Deno.env.get("GROQ_MODEL") ?? "llama-3.3-70b-versatile",
+        model: Deno.env.get("GROQ_MODEL") ?? "openai/gpt-oss-120b",
         temperature: 0.7,
         max_completion_tokens: 4096,
         top_p: 0.9,
