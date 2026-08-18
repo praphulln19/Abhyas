@@ -8,45 +8,51 @@ Before contributing, please ensure you have the following installed:
 
 - **[Node.js](https://nodejs.org/)** (v18+ LTS recommended)
 - **[Git](https://git-scm.com/)**
-- **[Supabase Account](https://supabase.com/)** (Free tier)
-- **[Groq API Key](https://console.groq.com/keys)** (Free tier works perfectly)
+- **[Docker](https://www.docker.com/products/docker-desktop/)** - runs Supabase (Postgres, Auth, Storage) locally, no cloud account needed
+- **[Supabase CLI](https://supabase.com/docs/guides/cli/getting-started)**
+- **[Groq API Key](https://console.groq.com/keys)** (Free tier works perfectly) - only needed if you're testing the AI features
 
 ## Local Development Setup
+
+You don't need a Supabase account or access to production credentials to contribute. `supabase start` runs the entire backend (Postgres, Auth, Storage) in Docker containers on your machine, seeded with a ready-to-use test account.
 
 1. **Fork and Clone the Repository**
    ```bash
    git clone https://github.com/gloooomed/Abhyas.git
    cd Abhyas
-   ```
-
-2. **Install Dependencies**
-   ```bash
    npm install
    ```
-   **Note** - Make sure you have Supabase CLI installed in your system.
 
-3. **Set Up Environment Variables**
-   Create a `.env.local` file in the root directory:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_project_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
+2. **Start the local Supabase stack** (requires Docker running)
    ```bash
-   supabase secrets set GROQ_API_KEY=your_groq_api_key
-   supabase secrets set ELEVENLABS_API_KEY=your_elevenlabs_api_key
-   supabase link --project-ref your_project_ref
-   supabase db push
-   supabase functions deploy ai
-   supabase functions deploy save-activity
-   supabase functions deploy text-to-speech
+   supabase start
+   ```
+   This applies every migration in `supabase/migrations/` - including the base schema, RLS policies, and the AI rate-limit table/function - and loads `supabase/seed.sql`, which creates a test account:
+   ```
+   email:    test@abhyas.dev
+   password: TestPassword123!
+   ```
+   The command prints an API URL and `anon key` - copy those into `.env.local`:
+   ```env
+   VITE_SUPABASE_URL=http://127.0.0.1:54321
+   VITE_SUPABASE_ANON_KEY=the_anon_key_printed_above
    ```
 
-   `supabase db push` applies the migrations in `supabase/migrations/` - this includes RLS policies and the table/function backing the AI edge function's rate limiting, so the `ai` function will error without it.
+3. **Serve the Edge Functions locally**, in a separate terminal (only needed if you're touching AI, resume-optimizer, or text-to-speech features):
+   ```bash
+   supabase functions serve --env-file .env.local
+   ```
+   Add your own key(s) to `.env.local` first: `GROQ_API_KEY=your_groq_api_key` (and `ELEVENLABS_API_KEY=your_elevenlabs_api_key` for voice features). These are real third-party calls - Groq/ElevenLabs aren't mocked locally.
 
-4. **Start the Development Server**
+4. **Start the dev server**
    ```bash
    npm run dev
+   ```
+   Go to `/sign-in` - since `VITE_SUPABASE_URL` points at `127.0.0.1`, a "Local dev only" login form appears below the Google button. Sign in with the test account above.
+
+5. **When you're done**, tear down the containers:
+   ```bash
+   supabase stop
    ```
 
 ## Contribution Workflow

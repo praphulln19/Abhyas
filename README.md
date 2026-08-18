@@ -63,36 +63,26 @@ cd Abhyas
 npm install
 ```
 
-Create a `.env.local` file:
+The fastest way to run Abhyas locally needs no Supabase account at all - `supabase start` runs Postgres, Auth, and Storage in Docker containers on your machine, with a seeded test login (`test@abhyas.dev` / `TestPassword123!`):
+
+```bash
+supabase start
+```
+
+Copy the API URL and `anon key` it prints into `.env.local`:
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_ANON_KEY=the_anon_key_printed_above
 ```
 
-Set backend secrets for Supabase Edge Functions:
+To exercise the AI/resume/voice features, serve the Edge Functions locally in a second terminal with your own Groq/ElevenLabs keys:
 
 ```bash
-supabase secrets set GROQ_API_KEY=your_groq_api_key
-supabase secrets set ELEVENLABS_API_KEY=your_elevenlabs_api_key
+supabase functions serve --env-file .env.local
 ```
 
-`GROQ_MODEL` is optional and defaults to `openai/gpt-oss-120b` - set it only if you want to pin a different [Groq-hosted model](https://console.groq.com/docs/models).
-
-Link your project and apply the database migrations (RLS policies + the AI rate-limit table/function):
-
-```bash
-supabase link --project-ref your_project_ref
-supabase db push
-```
-
-Deploy the Edge Functions:
-
-```bash
-supabase functions deploy ai
-supabase functions deploy save-activity
-supabase functions deploy text-to-speech
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md#local-development-setup) for the full walkthrough. `GROQ_MODEL` is optional and defaults to `openai/gpt-oss-120b` - set it only if you want to pin a different [Groq-hosted model](https://console.groq.com/docs/models).
 
 ```bash
 npm run dev
